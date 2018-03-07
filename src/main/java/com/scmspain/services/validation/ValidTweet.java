@@ -16,7 +16,7 @@ import javax.validation.Payload;
 @Retention(RUNTIME)
 public @interface ValidTweet {
 
-	String message() default "Tweet must not be greater than 140 characters";
+	String message() default "Tweet must not be empty or longer than 140 characters";
 
 	Class<?>[] groups() default {};
 

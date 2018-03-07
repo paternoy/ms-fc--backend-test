@@ -16,16 +16,6 @@ public class TweetValidatorTest {
 	}
 
 	@Test
-	public void testEmptyTweetKO() {
-		assert (!tweetValidator.isValid("", null));
-	}
-
-	@Test
-	public void testNullTweetKO() {
-		assert (!tweetValidator.isValid(null, null));
-	}
-
-	@Test
 	public void testStartsWithHyperlinkOK() {
 		assert (tweetValidator.isValid("http://domain.com/path/ 123456789", null));
 	}
@@ -37,7 +27,27 @@ public class TweetValidatorTest {
 
 	@Test
 	public void testMultipleHyperlinksOK() {
-		assert (!tweetValidator.isValid("http://domain.com/path/ 34 http://domain1 http://domain2 050 http://d", null));
+		assert (tweetValidator.isValid("http://domain.com/path/ 34 http://domain1 http://domain2 050 http://d", null));
+	}
+
+	@Test
+	public void testWrongHyperlinkKO() {
+		assert (!tweetValidator.isValid("12345http://domain.com/path/", null));
+	}
+	
+	@Test
+	public void testWrongSyntaxHyperlinkKO() {
+		assert (!tweetValidator.isValid("12345 http:/domain.com/path/", null));
+	}
+
+	@Test
+	public void testOnlyHyperlinkKO() {
+		assert (!tweetValidator.isValid("http://domain.com/path/", null));
+	}
+
+	@Test
+	public void testHyperlinkLimitsOK() {
+		assert (tweetValidator.isValid("12 (56 http://domain.com/path/) 0", null));
 	}
 
 	@Test
