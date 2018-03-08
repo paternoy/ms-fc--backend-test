@@ -30,6 +30,12 @@ public class TweetService {
 		this.tweetValidator = new TweetValidator();
 	}
 
+	public TweetService(EntityManager entityManager, MetricWriter metricWriter, TweetValidator tweetValidator) {
+		this.entityManager = entityManager;
+		this.metricWriter = metricWriter;
+		this.tweetValidator = tweetValidator;
+	}
+
 	/**
 	 * Push tweet to repository Parameter - publisher - creator of the Tweet
 	 * Parameter - text - Content of the Tweet Result - recovered Tweet

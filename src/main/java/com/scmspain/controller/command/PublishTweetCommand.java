@@ -8,7 +8,6 @@ public class PublishTweetCommand {
 	@NotEmpty
 	private String publisher;
 
-	@NotEmpty
 	@ValidTweet
 	private String tweet;
 
