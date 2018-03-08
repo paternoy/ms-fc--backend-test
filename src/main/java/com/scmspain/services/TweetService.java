@@ -1,6 +1,7 @@
 package com.scmspain.services;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -49,11 +50,14 @@ public class TweetService {
 			throw new ServiceException("Tweet content cannot be empty");
 		if (!tweetValidator.isValid(text, null))
 			throw new ServiceException("Tweet content exceeds maximum length");
+		
 		Tweet tweet = new Tweet();
 		tweet.setTweet(text);
 		tweet.setPublisher(publisher);
+		tweet.setPublicationDate(Calendar.getInstance().getTime());		
 		this.metricWriter.increment(new Delta<Number>("published-tweets", 1));
 		this.entityManager.persist(tweet);
+
 	}
 
 	/**
@@ -72,11 +76,13 @@ public class TweetService {
 		List<Tweet> result = new ArrayList<Tweet>();
 		this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
 		TypedQuery<Long> query = this.entityManager.createQuery(
-				"SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 ORDER BY id DESC", Long.class);
+				"SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 ORDER BY publicationDate DESC,id DESC",
+				Long.class);
 		List<Long> ids = query.getResultList();
 		for (Long id : ids) {
 			result.add(getTweet(id));
 		}
 		return result;
 	}
+
 }
