@@ -21,16 +21,23 @@ public class Tweet {
 	@Column(nullable = true)
 	private Long pre2015MigrationStatus = 0L;
 	/**
-	 * The date the tweet was published. Allows old tweets with null Publication Date
+	 * The date the tweet was published. Allows old tweets with null Publication
+	 * Date
 	 */
 	@Column(nullable = true)
 	@JsonIgnore
 	private Date publicationDate;
+	@Column(nullable = false)
+	@JsonIgnore
+	private Boolean discarded = false;
+	@Column(nullable = true)
+	@JsonIgnore
+	private Date discardedDate;
 
 	public Tweet() {
 		super();
 	}
-	
+
 	public Tweet(String publisher, String tweet, Date publicationDate) {
 		super();
 		this.publisher = publisher;
@@ -70,13 +77,28 @@ public class Tweet {
 		this.pre2015MigrationStatus = pre2015MigrationStatus;
 	}
 
-	
 	public Date getPublicationDate() {
 		return publicationDate;
 	}
 
 	public void setPublicationDate(Date publicationDate) {
 		this.publicationDate = publicationDate;
+	}
+
+	public Boolean getDiscarded() {
+		return discarded;
+	}
+
+	public void setDiscarded(Boolean discarded) {
+		this.discarded = discarded;
+	}
+
+	public Date getDiscardedDate() {
+		return discardedDate;
+	}
+
+	public void setDiscardedDate(Date discardedDate) {
+		this.discardedDate = discardedDate;
 	}
 
 }

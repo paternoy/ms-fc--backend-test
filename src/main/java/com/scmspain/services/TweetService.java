@@ -16,6 +16,7 @@ import org.springframework.validation.BindException;
 
 import com.scmspain.entities.Tweet;
 import com.scmspain.services.exception.ServiceException;
+import com.scmspain.services.exception.TweetNotFoundServiceException;
 import com.scmspain.services.validation.TweetValidator;
 
 @Service
@@ -76,13 +77,27 @@ public class TweetService {
 		List<Tweet> result = new ArrayList<Tweet>();
 		this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
 		TypedQuery<Long> query = this.entityManager.createQuery(
-				"SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 ORDER BY publicationDate DESC,id DESC",
+				"SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = false ORDER BY publicationDate DESC,id DESC",
 				Long.class);
 		List<Long> ids = query.getResultList();
 		for (Long id : ids) {
 			result.add(getTweet(id));
 		}
 		return result;
+	}
+
+	public void discardTweet(Long tweetId) throws TweetNotFoundServiceException {
+		if (tweetId != null) {
+			Tweet tweet = this.entityManager.find(Tweet.class, tweetId);
+			if (tweet == null)
+				throw new TweetNotFoundServiceException(tweetId);
+			tweet.setDiscarded(true);
+			tweet.setDiscardedDate(Calendar.getInstance().getTime());
+			this.metricWriter.increment(new Delta<Number>("discarded-tweets", 1));
+			this.entityManager.persist(tweet);
+		} else {
+			throw new IllegalArgumentException("Tweet id cannot be null");
+		}
 	}
 
 }
