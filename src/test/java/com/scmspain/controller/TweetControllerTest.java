@@ -90,6 +90,28 @@ public class TweetControllerTest {
 
 	}
 	
+	@Test
+	public void shouldReturnAllDiscardedTweetsInOrder() throws Exception {
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+		entityManager.persist(new Tweet("John","Tweet 1",simpleDateFormat.parse("01-01-2018 4:00:00")));
+		Tweet tweet2 = new Tweet("John","Tweet 2",simpleDateFormat.parse("01-01-2018 6:00:00"));
+		tweet2.setDiscarded(true);
+		tweet2.setDiscardedDate(simpleDateFormat.parse("03-01-2018 00:00:00"));
+		entityManager.persist(tweet2);
+		Tweet tweet3 = new Tweet("John","Tweet 3",simpleDateFormat.parse("01-01-2018 6:00:00"));
+		tweet3.setDiscarded(true);
+		tweet3.setDiscardedDate(simpleDateFormat.parse("02-01-2018 00:00:00"));
+		entityManager.persist(tweet3);
+		
+		mockMvc.perform(get("/discarded"))
+				.andExpect(status().is(200))
+				.andExpect(jsonPath("$",hasSize(2)))
+				.andExpect(jsonPath("$[0].tweet", is("Tweet 2")))
+				.andExpect(jsonPath("$[1].tweet", is("Tweet 3")))
+				.andReturn();
+
+	}
+	
 
 	private MockHttpServletRequestBuilder newTweet(String publisher, String tweet) {
 		return post("/tweet")

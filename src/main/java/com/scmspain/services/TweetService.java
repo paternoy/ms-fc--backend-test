@@ -99,5 +99,18 @@ public class TweetService {
 			throw new IllegalArgumentException("Tweet id cannot be null");
 		}
 	}
+	
+	public List<Tweet> listAllDiscardedTweets() {
+		List<Tweet> result = new ArrayList<Tweet>();
+		this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
+		TypedQuery<Long> query = this.entityManager.createQuery(
+				"SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = true ORDER BY discardedDate DESC",
+				Long.class);
+		List<Long> ids = query.getResultList();
+		for (Long id : ids) {
+			result.add(getTweet(id));
+		}
+		return result;
+	}
 
 }
