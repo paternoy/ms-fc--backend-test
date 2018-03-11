@@ -2,6 +2,7 @@ package com.scmspain.controller;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -45,8 +46,8 @@ public class TweetController {
 	}
 
 	@PostMapping("/discarded")
-	@ResponseStatus(CREATED)
-	public void discardTweet(@RequestBody DiscardTweetCommand discardTweetCommand)
+	@ResponseStatus(OK)
+	public void discardTweet(@Valid @RequestBody DiscardTweetCommand discardTweetCommand)
 			throws TweetNotFoundServiceException {
 		this.tweetService.discardTweet(discardTweetCommand.getTweet());
 	}

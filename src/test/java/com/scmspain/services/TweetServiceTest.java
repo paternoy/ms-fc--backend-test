@@ -1,6 +1,8 @@
 package com.scmspain.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -15,10 +17,12 @@ import javax.persistence.TypedQuery;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.actuate.metrics.writer.MetricWriter;
 
 import com.scmspain.entities.Tweet;
 import com.scmspain.services.exception.ServiceException;
+import com.scmspain.services.exception.TweetNotFoundServiceException;
 import com.scmspain.services.validation.TweetValidator;
 
 public class TweetServiceTest {
@@ -61,32 +65,62 @@ public class TweetServiceTest {
 	@SuppressWarnings("unchecked")
 	public void shouldListAllDiscardedTweets() throws Exception {
 		TypedQuery<Long> query = mock(TypedQuery.class);
-		when(entityManager.createQuery(any(String.class),eq(Long.class))).thenReturn(query);
-		when(query.getResultList()).thenReturn(Arrays.asList(1L,2L,6L));
-		when(entityManager.find(eq(Tweet.class),eq(1L))).thenReturn(new Tweet("John","Tweet 1",null));
-		when(entityManager.find(eq(Tweet.class),eq(2L))).thenReturn(new Tweet("John","Tweet 2",null));
-		when(entityManager.find(eq(Tweet.class),eq(6L))).thenReturn(new Tweet("John","Tweet 6",null));
+		when(entityManager.createQuery(any(String.class), eq(Long.class))).thenReturn(query);
+		when(query.getResultList()).thenReturn(Arrays.asList(1L, 2L, 6L));
+		when(entityManager.find(eq(Tweet.class), eq(1L))).thenReturn(new Tweet("John", "Tweet 1", null));
+		when(entityManager.find(eq(Tweet.class), eq(2L))).thenReturn(new Tweet("John", "Tweet 2", null));
+		when(entityManager.find(eq(Tweet.class), eq(6L))).thenReturn(new Tweet("John", "Tweet 6", null));
 		List<Tweet> discardedTweets = tweetService.listAllDiscardedTweets();
 
-		verify(entityManager).createQuery(any(String.class),eq(Long.class));
-		verify(entityManager,times(3)).find(eq(Tweet.class),any(Long.class));
+		verify(entityManager).createQuery(any(String.class), eq(Long.class));
+		verify(entityManager, times(3)).find(eq(Tweet.class), any(Long.class));
 		verify(query).getResultList();
-		assertEquals(3,discardedTweets.size());
-		assertEquals("Tweet 1",discardedTweets.get(0).getTweet());
-		assertEquals("Tweet 2",discardedTweets.get(1).getTweet());
-		assertEquals("Tweet 6",discardedTweets.get(2).getTweet());
+		assertEquals(3, discardedTweets.size());
+		assertEquals("Tweet 1", discardedTweets.get(0).getTweet());
+		assertEquals("Tweet 2", discardedTweets.get(1).getTweet());
+		assertEquals("Tweet 6", discardedTweets.get(2).getTweet());
 	}
-	
+
 	@Test
 	public void shouldListNoDiscardedTweets() throws Exception {
 		TypedQuery query = mock(TypedQuery.class);
-		when(entityManager.createQuery(any(String.class),eq(Long.class))).thenReturn(query);
+		when(entityManager.createQuery(any(String.class), eq(Long.class))).thenReturn(query);
 		when(query.getResultList()).thenReturn(Collections.emptyList());
 		List<Tweet> discardedTweets = tweetService.listAllDiscardedTweets();
 
-		verify(entityManager).createQuery(any(String.class),eq(Long.class));
-		verify(entityManager,never()).find(eq(Tweet.class),any(Long.class));
+		verify(entityManager).createQuery(any(String.class), eq(Long.class));
+		verify(entityManager, never()).find(eq(Tweet.class), any(Long.class));
 		verify(query).getResultList();
-		assertEquals(0,discardedTweets.size());
+		assertEquals(0, discardedTweets.size());
+	}
+
+	@Test
+	public void shouldDiscardATweet() throws Exception {
+		Long tweetId = 5L;
+		Tweet tweet = new Tweet("John", "Tweet 5", null);
+		tweet.setId(tweetId);
+		when(entityManager.find(eq(Tweet.class), eq(tweetId))).thenReturn(tweet);
+		tweetService.discardTweet(tweetId);
+		ArgumentCaptor<Tweet> argument = ArgumentCaptor.forClass(Tweet.class);
+
+		verify(entityManager).find(eq(Tweet.class), eq(tweetId));
+		verify(entityManager).persist(argument.capture());
+		
+		assertNotNull(argument.getValue());
+		assertEquals(tweetId, argument.getValue().getId());
+		assertEquals("Tweet 5", argument.getValue().getTweet());
+		assertEquals("John", argument.getValue().getPublisher());
+		assertNotNull(argument.getValue().getDiscardedDate());
+		assertTrue(argument.getValue().getDiscarded());
+	}
+	
+	@Test(expected=TweetNotFoundServiceException.class)
+	public void shouldThrowExceptionWhenDiscardingAWrongTweet() throws Exception {
+		Long tweetId = 5L;
+		when(entityManager.find(eq(Tweet.class), eq(tweetId))).thenReturn(null);
+		tweetService.discardTweet(tweetId);
+
+		verify(entityManager).find(eq(Tweet.class), eq(tweetId));
+		verify(entityManager,never()).persist(any(Tweet.class));
 	}
 }
